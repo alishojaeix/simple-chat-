@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat Bot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="stars"></div>
+    <div id="root"></div>
+    
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Load React -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    
+    <!-- Load App -->
+    <script type="text/babel">
+        // Three.js Star Background
+        function initStars() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('stars').appendChild(renderer.domElement);
+            
+            // Create stars
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xFFFFFF,
+                size: 0.1,
+                transparent: true
+            });
+            
+            const starsVertices = [];
+            for (let i = 0; i < 10000; i++) {
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starsVertices.push(x, y, z);
+            }
+            
+            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+            const stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+            
+            camera.position.z = 1;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                stars.rotation.x += 0.0001;
+                stars.rotation.y += 0.0001;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function App() {
+            const [messages, setMessages] = React.useState([
+                { text: "Hello! I'm a simple chat bot. How can I help you?", isUser: false }
+            ]);
+            const [inputValue, setInputValue] = React.useState("");
+
+            const botResponses = {
+                "hello": "Hello! How can I help you?",
+                "hi": "Hi! How can I help you?",
+                "goodbye": "Goodbye! Have a nice day.",
+                "bye": "Goodbye! Have a nice day.",
+                "how are you": "I'm good, thank you! How are you?",
+                "what's your name": "I'm a simple chat bot.",
+                "help": "I can answer simple questions. What would you like to know?",
+                "weather": "Today's weather is sunny with a temperature of 25°C.",
+                "time": `The current time is ${new Date().toLocaleTimeString('en-US')}.`,
+                "date": `Today is ${new Date().toLocaleDateString('en-US')}.`,
+                "forecast": "For detailed weather information, please visit a weather website.",
+                "news": "For the latest news, you can visit reputable news websites.",
+                "sports": "You can get the latest sports news from reputable sports websites.",
+                "music": "I can talk to you about different types of music. What genre do you like?",
+                "movie": "Are you looking for movie recommendations? I can help you with that.",
+                "book": "Are you looking for book recommendations? I can help you with that.",
+                "travel": "Where would you like to travel? I can provide you with useful information.",
+                "food": "Are you looking for a specific recipe?",
+                "health": "For medical information, please consult your doctor.",
+                "technology": "You can get the latest technology news from specialized websites.",
+                "programming": "I can talk to you about programming languages.",
+                "default": "I'm sorry, I didn't understand your question. Could you please rephrase it?"
+            };
+
+            React.useEffect(() => {
+                initStars();
+            }, []);
+
+            const handleSendMessage = () => {
+                if (inputValue.trim() === "") return;
+
+                const userMessage = { text: inputValue, isUser: true };
+                setMessages(prev => [...prev, userMessage]);
+                setInputValue("");
+
+                setTimeout(() => {
+                    const userInput = inputValue.toLowerCase();
+                    let botResponse = botResponses.default;
+
+                    for (const [key, value] of Object.entries(botResponses)) {
+                        if (userInput.includes(key.toLowerCase())) {
+                            botResponse = value;
+                            break;
+                        }
+                    }
+
+                    const botMessage = { text: botResponse, isUser: false };
+                    setMessages(prev => [...prev, botMessage]);
+                }, 1000);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === "Enter") {
+                    handleSendMessage();
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="chat-container">
+                        <div className="chat-header">
+                            <h2>Simple Chat Bot</h2>
+                        </div>
+                        <div className="chat-messages">
+                            {messages.map((message, index) => (
+                                <div key={index} className={`message ${message.isUser ? "user" : "bot"}`}>
+                                    <div className="message-content">
+                                        {message.text}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="chat-input">
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="Type your message..."
+                            />
+                            <button onClick={handleSendMessage}>Send</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(
+            <App />,
+            document.getElementById('root')
+        );
+    </script>
+</body>
+</html>
